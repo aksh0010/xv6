@@ -8,7 +8,7 @@ If you want to learn more about operating system, here are books i am refereing 
 2) https://pages.cs.wisc.edu/~remzi/OSTEP/ 
 
 Programs I have added or updated: 
-mem.c 
-exectime.c
-sh.c ( added whoami implementation)
+ 1)mem.c 
+ 2)exectime.c
+ 3)sh.c ( added whoami implementation)
 
