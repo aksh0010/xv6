@@ -19,4 +19,5 @@ Programs I have added or updated
     2)exectime.c (exec time but return times to execute the program)
     3)sh.c ( added whoami implementation)
     4)mystdiotest.c (Buffered I/O )
+    5)pstate.c ( created my own System call similar to ps() in unix)
 
