@@ -6,7 +6,6 @@
 
 int main()
 {
-
     pstate();
     exit();
 }

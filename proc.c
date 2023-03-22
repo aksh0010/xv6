@@ -6,7 +6,6 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
-
 struct
 {
   struct spinlock lock;
@@ -551,33 +550,33 @@ int pstate()
   sti();
 
   acquire(&ptable.lock);
- cprintf("---------------------------------------------------------------------------\n");
-  cprintf("Pid   \t\t   Name   \t\t   State   \t\t   Parent\n");
-  cprintf("---------------------------------------------------------------------------\n");
+  cprintf("---------------------------------------------------------------------------------------------------------\n");
+  cprintf("Pid   \t\t   Name   \t\t   State   \t\t   Parent   \t\t   Priority\n");
+  cprintf("---------------------------------------------------------------------------------------------------------\n");
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     if (p->state == SLEEPING)
     {
       if (p->parent->pid <= 0 || p->parent->pid > 20000)
-        cprintf("%d   \t\t   %s   \t\t   SLEEPING   \t\t   %s\n", p->pid, p->name, "(init)");
+        cprintf("%d   \t\t   %s   \t\t   SLEEPING   \t\t   %s   \t\t   %d\n", p->pid, p->name, "(init)", p->priority);
       else
-        cprintf("%d   \t\t   %s   \t\t   SLEEPING   \t\t   %s\n", p->pid, p->name, p->parent->name);
+        cprintf("%d   \t\t   %s   \t\t   SLEEPING   \t\t   %s   \t\t   %d\n", p->pid, p->name, p->parent->name, p->priority);
       total++;
     }
     else if (p->state == RUNNING)
     {
       if (p->parent->pid <= 0 || p->parent->pid > 20000)
-        cprintf("%d   \t\t   %s   \t\t   RUNNING   \t\t   %s\n", p->pid, p->name, "(init)");
+        cprintf("%d   \t\t   %s   \t\t   RUNNING   \t\t   %s   \t\t   %d\n", p->pid, p->name, "(init)", p->priority);
       else
-        cprintf("%d   \t\t   %s   \t\t   RUNNING   \t\t   %s\n", p->pid, p->name, p->parent->name);
+        cprintf("%d   \t\t   %s   \t\t   RUNNING   \t\t   %s   \t\t   %d\n", p->pid, p->name, p->parent->name, p->priority);
       total++;
     }
     else if (p->state == RUNNABLE)
     {
       if (p->parent->pid <= 0 || p->parent->pid > 20000)
-        cprintf("%d   \t\t   %s   \t\t   RUNNABLE   \t\t   %s\n", p->pid, p->name, "(init)");
+        cprintf("%d   \t\t   %s   \t\t   RUNNABLE   \t\t   %s   \t\t   %d\n", p->pid, p->name, "(init)", p->priority);
       else
-        cprintf("%d   \t\t   %s   \t\t   RUNNABLE   \t\t   %s\n", p->pid, p->name, p->parent->name);
+        cprintf("%d   \t\t   %s   \t\t   RUNNABLE   \t\t   %s   \t\t   %d\n", p->pid, p->name, p->parent->name, p->priority);
       total++;
     }
   }
@@ -594,8 +593,26 @@ int pstate()
       cprintf("cpu %d: %s\n", i, cpus[i].proc->name);
   }
   cprintf("\n");
- cprintf("---------------------------------------------------------------------------\n");
+  cprintf("---------------------------------------------------------------------------------------------------------\n");
   release(&ptable.lock);
 
   return 22;
+}
+int set(int pid, int priority)
+{
+
+  struct proc *p;
+  acquire(&ptable.lock);
+
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      p->priority = priority;
+      break;
+    }
+  }
+  release(&ptable.lock);
+
+  return pid;
 }
