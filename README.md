@@ -20,4 +20,5 @@ Programs I have added or updated
     3)sh.c ( added whoami implementation)
     4)mystdiotest.c (Buffered I/O )
     5)pstate.c ( created my own System call similar to ps() in unix)
+    6)set.c (for priority scheduling)
 
