@@ -21,4 +21,6 @@ Programs I have added or updated
     4)mystdiotest.c (Buffered I/O )
     5)pstate.c ( created my own System call similar to ps() in unix)
     6)set.c (for priority scheduling)
+    7)pause() ( system call which causes the current process to be suspended, waiting for a signal to proceed )
+    8)kill(pid, flag) ( Extend system call kill(pid) to kill(pid, flag) where flag can be 0 or 1. kill(pid, 0) should work like kill(pid): terminate the process with           pid. kill(pid, 1) should send a signal to process pid to resume this process if it has been suspended with pause().)
 
