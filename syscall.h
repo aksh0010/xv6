@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_pstate 22
 #define SYS_set    23
+#define SYS_pause  24

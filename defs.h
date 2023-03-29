@@ -107,7 +107,6 @@ int             cpuid(void);
 void            exit(void);
 int             fork(void);
 int             growproc(int);
-int             kill(int);
 struct cpu*     mycpu(void);
 struct proc*    myproc();
 void            pinit(void);
@@ -122,7 +121,8 @@ void            wakeup(void*);
 void            yield(void);
 int             pstate(void);
 int             set(int pid, int priority);
-
+int             kill(int,int); // Extending the system call from kill(int) -> kill(int,int)
+int             pause();
 // swtch.S
 void            swtch(struct context**, struct context*);
 

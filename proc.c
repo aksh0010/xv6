@@ -10,6 +10,7 @@ struct
 {
   struct spinlock lock;
   struct proc proc[NPROC];
+  struct cpu cpu[NCPU];
 } ptable;
 
 static struct proc *initproc;
@@ -47,7 +48,10 @@ mycpu(void)
   for (i = 0; i < ncpu; ++i)
   {
     if (cpus[i].apicid == apicid)
+    {
+
       return &cpus[i];
+    }
   }
   panic("unknown apicid\n");
 }
@@ -329,9 +333,11 @@ int wait(void)
 //   - swtch to start running that process
 //   - eventually that process transfers control
 //       via swtch back to the scheduler.
+
 void scheduler(void)
 {
   struct proc *p;
+  struct proc *process;
   struct cpu *c = mycpu();
   c->proc = 0;
 
@@ -339,6 +345,7 @@ void scheduler(void)
   {
     // Enable interrupts on this processor.
     sti();
+    struct proc *highPriority;
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
@@ -347,9 +354,21 @@ void scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
+      highPriority = p;
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+
+      for (process = ptable.proc; process < &ptable.proc[NPROC]; process++)
+            {
+                if (process->state != RUNNABLE)
+                    continue;
+                if (highPriority->priority > process->priority)
+                    highPriority = process;
+            }
+
+      p = highPriority;
+
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -484,25 +503,45 @@ void wakeup(void *chan)
 // Kill the process with the given pid.
 // Process won't exit until it returns
 // to user space (see trap in trap.c).
-int kill(int pid)
+int kill(int pid, int flag)
 {
-  struct proc *p;
-
-  acquire(&ptable.lock);
-  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-  {
-    if (p->pid == pid)
+    struct proc *p;
+    if (flag == 0)
     {
-      p->killed = 1;
-      // Wake process from sleep if necessary.
-      if (p->state == SLEEPING)
-        p->state = RUNNABLE;
-      release(&ptable.lock);
-      return 0;
+        acquire(&ptable.lock);
+
+        for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+        {
+            if (p->pid == pid)
+            {
+                p->killed = 1;
+                // Wake process from sleep if necessary.
+                if (p->state == SLEEPING)
+                    p->state = RUNNABLE;
+                release(&ptable.lock);
+                return 0;
+            }
+        }
+        release(&ptable.lock);
+        return -1;
     }
-  }
-  release(&ptable.lock);
-  return -1;
+    else if (flag == 1)
+    {
+        acquire(&ptable.lock);
+        for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+            if (p->pid == pid)
+            {
+                if (p->state == SUSPENDED)
+                {
+                    cprintf("resuming the process with id : %d\n", p->pid);
+                    p->state = RUNNING;
+                }
+            }
+        release(&ptable.lock);
+        return 1;
+    }
+
+    return -1;
 }
 
 // PAGEBREAK: 36
@@ -517,6 +556,7 @@ void procdump(void)
       [SLEEPING] "sleep ",
       [RUNNABLE] "runble",
       [RUNNING] "run   ",
+      [SUSPENDED] "suspended   ",
       [ZOMBIE] "zombie"};
   int i;
   struct proc *p;
@@ -555,7 +595,11 @@ int pstate()
   cprintf("---------------------------------------------------------------------------------------------------------\n");
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
-    if (p->state == SLEEPING)
+    if (p->state == SUSPENDED)
+    {
+      cprintf("%d   \t\t   %s   \t\t   SUSPENDED   \t\t   %s   \t\t   %d\n", p->pid, p->name, p->parent->name, p->priority);
+    }
+    else if (p->state == SLEEPING)
     {
       if (p->parent->pid <= 0 || p->parent->pid > 20000)
         cprintf("%d   \t\t   %s   \t\t   SLEEPING   \t\t   %s   \t\t   %d\n", p->pid, p->name, "(init)", p->priority);
@@ -615,4 +659,19 @@ int set(int pid, int priority)
   release(&ptable.lock);
 
   return pid;
+}
+int pause()
+{
+  struct proc *p;
+
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state == RUNNING)
+    {
+      p->state = SUSPENDED;
+      // return 1;
+    }
+  }
+
+  return -1;
 }
